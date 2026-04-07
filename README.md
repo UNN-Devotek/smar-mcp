@@ -6,14 +6,219 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for in
 
 ## Table of Contents
 
+- [Local Development Setup](#local-development-setup)
 - [Disclaimer](#disclaimer)
 - [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
 - [Available MCP Tools](#available-mcp-tools)
 - [API Endpoint Coverage](#api-endpoint-coverage)
 - [Environment Variables](#environment-variables)
 - [Development](#development)
+
+---
+
+## Local Development Setup
+
+When you finish this setup you'll have the MCP server built locally and connected to your MCP client (Claude Desktop, Cursor, VS Code Copilot, Cline, etc.). The server communicates over stdio — no ports, no Docker, no database required.
+
+### Prerequisites (all platforms)
+
+- **Node.js 18+** — install via the platform-specific steps below
+- **npm 7+** — bundled with Node.js
+- **git**
+- A [Smartsheet API token](https://developers.smartsheet.com/) — generate one at Account → Apps & Integrations → API Access
+
+---
+
+### Windows (WSL2)
+
+> [!NOTE]
+> Run the MCP server inside WSL2. Claude Desktop and other Windows MCP clients can call a WSL2 process — configure the client to invoke `wsl bash -c "node /path/to/build/index.js"` or use the Windows `node.exe` path directly (see MCP Client Config below).
+
+**1. Install WSL2 + Ubuntu** (PowerShell as Administrator):
+```powershell
+wsl --install
+# Restart when prompted, then open Ubuntu from the Start menu
+```
+
+**2. Install Node.js 20 inside WSL:**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs git
+node --version   # should print v20.x.x
+```
+
+**3. Clone the repo inside WSL:**
+```bash
+git clone https://github.com/UNN-Devotek/smar-mcp.git ~/smar-mcp
+cd ~/smar-mcp
+```
+
+**4. Install dependencies and build:**
+```bash
+npm install
+npm run build
+```
+
+**5. Create your `.env` file:**
+```bash
+cp .env.example .env
+# Edit .env and set SMARTSHEET_API_KEY=your_token_here
+```
+
+**6. Verify the server starts:**
+```bash
+node build/index.js
+# Should print: Smartsheet MCP Server running on stdio
+# Press Ctrl+C to stop
+```
+
+**7. Configure your MCP client** — see [MCP Client Config](#mcp-client-config) below.
+
+**Troubleshooting (Windows/WSL2):**
+- `wsl: command not found` — ensure you're in PowerShell, not CMD. Run `wsl --install` again.
+- `node: command not found` — the NodeSource install may have missed your shell. Run `source ~/.bashrc` or restart the terminal.
+- MCP client can't reach the server — if using Claude Desktop on Windows, use the Windows node path. Run `which node` in WSL to find the binary, then add a symlink or use the Windows store Node.js instead.
+- `Permission denied` on `build/index.js` — run `chmod +x build/index.js`
+
+---
+
+### macOS
+
+**1. Install Homebrew** (skip if already installed):
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+**2. Install Node.js and git:**
+```bash
+brew install node git
+node --version   # should print v20.x.x or higher
+```
+
+**3. Clone the repo:**
+```bash
+git clone https://github.com/UNN-Devotek/smar-mcp.git ~/smar-mcp
+cd ~/smar-mcp
+```
+
+**4. Install dependencies and build:**
+```bash
+npm install
+npm run build
+```
+
+**5. Create your `.env` file:**
+```bash
+cp .env.example .env
+# Open .env in any editor and set SMARTSHEET_API_KEY=your_token_here
+```
+
+**6. Verify the server starts:**
+```bash
+node build/index.js
+# Should print: Smartsheet MCP Server running on stdio
+# Press Ctrl+C to stop
+```
+
+**7. Configure your MCP client** — see [MCP Client Config](#mcp-client-config) below.
+
+**Troubleshooting (macOS):**
+- `brew: command not found` — Homebrew install may need you to add it to PATH. Follow the instructions printed at the end of the install script.
+- `EACCES` permission errors on `npm install` — do not use `sudo npm`. Instead install Node.js via `nvm`: `brew install nvm && nvm install 20 && nvm use 20`.
+- Apple Silicon (M1/M2/M3) — Node.js 18+ has native ARM64 builds; no Rosetta required.
+- MCP client shows "server not found" — make sure you used the absolute path to `node` in the config (run `which node` to get it).
+
+---
+
+### Linux
+
+**1. Install Node.js 20 and git:**
+```bash
+# Debian/Ubuntu
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs git
+
+# Fedora/RHEL
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo dnf install -y nodejs git
+
+node --version   # should print v20.x.x
+```
+
+**2. Clone the repo:**
+```bash
+git clone https://github.com/UNN-Devotek/smar-mcp.git ~/smar-mcp
+cd ~/smar-mcp
+```
+
+**3. Install dependencies and build:**
+```bash
+npm install
+npm run build
+```
+
+**4. Create your `.env` file:**
+```bash
+cp .env.example .env
+# Edit .env and set SMARTSHEET_API_KEY=your_token_here
+```
+
+**5. Verify the server starts:**
+```bash
+node build/index.js
+# Should print: Smartsheet MCP Server running on stdio
+# Press Ctrl+C to stop
+```
+
+**6. Configure your MCP client** — see [MCP Client Config](#mcp-client-config) below.
+
+**Troubleshooting (Linux):**
+- `curl: command not found` — install with `sudo apt install curl` or `sudo dnf install curl`.
+- `node: command not found` after install — run `source ~/.bashrc` or log out and back in.
+- `EACCES` on npm install — do not use `sudo npm`. Use `nvm` instead: install from [nvm.sh](https://github.com/nvm-sh/nvm), then `nvm install 20 && nvm use 20`.
+
+---
+
+### MCP Client Config
+
+The server requires two values in the config: the path to your `node` binary and the path to `build/index.js`. Use absolute paths.
+
+**Find your node path:**
+```bash
+which node        # e.g. /home/user/.nvm/versions/node/v20.19.0/bin/node
+```
+
+**Find your repo path:**
+```bash
+realpath build/index.js   # e.g. /home/user/smar-mcp/build/index.js
+```
+
+**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+```json
+{
+  "mcpServers": {
+    "smartsheet": {
+      "command": "/absolute/path/to/node",
+      "args": ["/absolute/path/to/smar-mcp/build/index.js"],
+      "env": {
+        "SMARTSHEET_API_KEY": "your-api-key-here",
+        "SMARTSHEET_ENDPOINT": "https://api.smartsheet.com/2.0",
+        "ALLOW_DELETE_TOOLS": "false"
+      }
+    }
+  }
+}
+```
+
+> [!TIP]
+> See `claude_desktop_config-example.json` in the project root for a ready-to-copy template.
+
+**VS Code Copilot / Cline / Cursor** — the config format is identical. Check your client's MCP settings panel and paste the same block under `mcpServers`.
+
+> [!WARNING]
+> Restart your MCP client after editing the config. Most clients only read the config on startup.
+
+---
 
 ## Disclaimer
 
@@ -31,58 +236,6 @@ MCP is a new technology. This integration relies on a Smartsheet API token allow
 - Manage workspaces and folders
 - Look up users and check current user identity
 - Formatted responses optimized for AI consumption
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/UNN-Devotek/smar-mcp.git
-   cd smar-mcp
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env` file in the project root:
-   ```
-   SMARTSHEET_API_KEY=your_smartsheet_api_token
-   ALLOW_DELETE_TOOLS=false
-   ```
-
-   Obtain a Smartsheet API token from the [Smartsheet Developer Portal](https://developers.smartsheet.com/).
-
-4. Build the project:
-   ```bash
-   npm run build
-   ```
-
-## Usage
-
-### Using npm scripts (recommended)
-
-```bash
-npm run start
-```
-
-Or build and start in one step:
-
-```bash
-npm run dev
-```
-
-### Using node directly
-
-```bash
-node -r dotenv/config build/index.js
-```
-
-The server will start and display: `Smartsheet MCP Server running on stdio`
-
-### Connecting to Claude Desktop
-
-Copy `claude_desktop_config-example.json` to your Claude Desktop config location and fill in your absolute path to `build/index.js` and your API key. See the example file for the exact format.
 
 ## Available MCP Tools
 
