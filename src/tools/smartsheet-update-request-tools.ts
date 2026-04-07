@@ -25,7 +25,7 @@ export function getUpdateRequestTools(server: McpServer, api: SmartsheetAPI) {
       },
       async ({ sheetId, rowIds, columnIds, includeAttachments, includeDiscussions, message, subject, ccMe, sendTo }) => {
         try {
-          console.info(`Creating update request for sheet ${sheetId}`);
+          console.error(`Creating update request for sheet ${sheetId}`);
           const result = await api.sheets.createUpdateRequest(sheetId, {
             rowIds,
             columnIds,

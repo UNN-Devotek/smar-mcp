@@ -144,19 +144,19 @@ export class SmartsheetSheetAPI {
     if (destinationFolderId) {
       data.destinationType = 'folder';
       data.destinationId = destinationFolderId;
-      console.debug(`Copying sheet to folder: ${destinationFolderId}`);
+      console.error(`Copying sheet to folder: ${destinationFolderId}`);
     } else if (workspaceId) {
       data.destinationType = 'workspace';
       data.destinationId = workspaceId;
-      console.debug(`Copying sheet to workspace: ${workspaceId}`);
+      console.error(`Copying sheet to workspace: ${workspaceId}`);
     } else {
       // Default to 'home' if no folder or workspace specified
       data.destinationType = 'home';
-      console.debug("Copying sheet to home");
+      console.error("Copying sheet to home");
     }
     
     const result = await this.api.request('POST', `/sheets/${sheetId}/copy`, data);
-    console.info(`Copy sheet result: ${JSON.stringify((result as any).result?.id)}`);
+    console.error(`Copy sheet result: ${JSON.stringify((result as any).result?.id)}`);
     return result;
   }
   

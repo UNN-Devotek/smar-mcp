@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SmartsheetAPI } from "../apis/smartsheet-api.js";
 import { z } from "zod";
+import { limitResponseSize } from "../utils/response-limiter.js";
 
 export function getFolderTools(server: McpServer, api: SmartsheetAPI) {
 
@@ -13,17 +14,10 @@ export function getFolderTools(server: McpServer, api: SmartsheetAPI) {
         },
         async ({ folderId}) => {
         try {
-            console.info(`Getting folder with ID: ${folderId}`);
+            console.error(`Getting folder with ID: ${folderId}`);
             const folder = await api.folders.getFolder(folderId);
 
-            return {
-            content: [
-                {
-                type: "text",
-                text: JSON.stringify(folder, null, 2)
-                }
-            ]
-            };
+            return limitResponseSize(folder);
         } catch (error: any) {
             console.error(`Failed to get folder with ID: ${folderId}`, { error });
             return {
@@ -49,17 +43,10 @@ export function getFolderTools(server: McpServer, api: SmartsheetAPI) {
         },
         async ({ folderId, folderName }) => {
         try {
-            console.info(`Creating folder in workspace with ID: ${folderId}`);
+            console.error(`Creating folder in workspace with ID: ${folderId}`);
             const folder = await api.folders.createFolder(folderId, folderName);
 
-            return {
-            content: [
-                {
-                type: "text",
-                text: JSON.stringify(folder, null, 2)
-                }
-            ]
-            };
+            return limitResponseSize(folder);
         } catch (error: any) {
             console.error(`Failed to create folder in workspace with ID: ${folderId}`, { error });
             return {
@@ -85,17 +72,10 @@ export function getFolderTools(server: McpServer, api: SmartsheetAPI) {
         },
         async ({ workspaceId, folderName }) => {
         try {
-            console.info(`Creating folder in workspace with ID: ${workspaceId}`);
+            console.error(`Creating folder in workspace with ID: ${workspaceId}`);
             const folder = await api.workspaces.createWorkspaceFolder(workspaceId, folderName);
 
-            return {
-            content: [
-                {
-                type: "text",
-                text: JSON.stringify(folder, null, 2)
-                }
-            ]
-            };
+            return limitResponseSize(folder);
         } catch (error: any) {
             console.error(`Failed to create folder in workspace with ID: ${workspaceId}`, { error });
             return {

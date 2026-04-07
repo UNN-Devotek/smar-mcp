@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SmartsheetAPI } from "../apis/smartsheet-api.js";
 import { z } from "zod";
+import { limitResponseSize } from "../utils/response-limiter.js";
 
 export function getWorkspaceTools(server: McpServer, api: SmartsheetAPI) {
 
@@ -11,17 +12,10 @@ export function getWorkspaceTools(server: McpServer, api: SmartsheetAPI) {
         {},
         async ({ }) => {
           try {
-            console.info("Getting workspaces");
+            console.error("Getting workspaces");
             const workspace = await api.workspaces.getWorkspaces();
     
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(workspace, null, 2)
-                }
-              ]
-            };
+            return limitResponseSize(workspace);
           } catch (error: any) {
             console.error("Failed to get workspaces", { error });
             return {
@@ -46,17 +40,10 @@ export function getWorkspaceTools(server: McpServer, api: SmartsheetAPI) {
         },
         async ({ workspaceId}) => {
           try {
-            console.info(`Getting workspace with ID: ${workspaceId}`);
+            console.error(`Getting workspace with ID: ${workspaceId}`);
             const workspace = await api.workspaces.getWorkspace(workspaceId);
     
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(workspace, null, 2)
-                }
-              ]
-            };
+            return limitResponseSize(workspace);
           } catch (error: any) {
             console.error(`Failed to get workspace with ID: ${workspaceId}`, { error });
             return {
@@ -81,17 +68,10 @@ export function getWorkspaceTools(server: McpServer, api: SmartsheetAPI) {
         },
         async ({ workspaceName }) => {
           try {
-            console.info(`Creating workspace: ${workspaceName}`);
+            console.error(`Creating workspace: ${workspaceName}`);
             const workspace = await api.workspaces.createWorkspace(workspaceName);
     
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(workspace, null, 2)
-                }
-              ]
-            };
+            return limitResponseSize(workspace);
           } catch (error: any) {
             console.error("Failed to create workspace", { error });
             return {

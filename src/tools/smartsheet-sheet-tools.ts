@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SmartsheetAPI } from "../apis/smartsheet-api.js";
 import { z } from "zod";
+import { limitResponseSize } from "../utils/response-limiter.js";
 
 export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDeleteTools: boolean) {
 
@@ -15,17 +16,10 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
       },
       async ({ sheetId, include, pageSize, page }) => {
         try {
-          console.info(`Getting sheet with ID: ${sheetId}`);
+          console.error(`Getting sheet with ID: ${sheetId}`);
           const sheet = await api.sheets.getSheet(sheetId, include, undefined, pageSize, page);
-          
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(sheet, null, 2)
-              }
-            ]
-          };
+
+          return limitResponseSize(sheet);
         } catch (error: any) {
           console.error(`Failed to get sheet with ID: ${sheetId}`, { error });
           return {
@@ -52,7 +46,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
       },
       async ({ url, include, pageSize, page }) => {
         try {
-          console.info(`Getting sheet with URL: ${url}`);
+          console.error(`Getting sheet with URL: ${url}`);
           const match = url.match(/\/sheets\/([^?\/]+)/);
           const directIdToken = match ? match[1] : null;
           if (!directIdToken) {
@@ -67,15 +61,8 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
             };
           }
           const sheet = await api.sheets.getSheetByDirectIdToken(directIdToken, include, undefined, pageSize, page);
-          
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(sheet, null, 2)
-              }
-            ]
-          };
+
+          return limitResponseSize(sheet);
         } catch (error: any) {
           console.error(`Failed to get sheet with URL: ${url}`, { error });
           return {
@@ -99,17 +86,10 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ sheetId }) => {
           try {
-            console.info(`Getting version for sheet with ID: ${sheetId}`);
+            console.error(`Getting version for sheet with ID: ${sheetId}`);
             const version = await api.sheets.getSheetVersion(sheetId);
-            
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(version, null, 2)
-                }
-              ]
-            };
+
+            return limitResponseSize(version);
           } catch (error: any) {
             console.error(`Failed to get sheet version for sheet ID: ${sheetId}`, { error });
             return {
@@ -139,17 +119,10 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ sheetId, rowId, columnId, include, pageSize, page }) => {
           try {
-            console.info(`Getting history for cell at row ${rowId}, column ${columnId} in sheet ${sheetId}`);
+            console.error(`Getting history for cell at row ${rowId}, column ${columnId} in sheet ${sheetId}`);
             const history = await api.sheets.getCellHistory(sheetId, rowId, columnId, include, pageSize, page);
-            
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(history, null, 2)
-                }
-              ]
-            };
+
+            return limitResponseSize(history);
           } catch (error: any) {
             console.error(`Failed to get cell history for row ${rowId}, column ${columnId} in sheet ${sheetId}`, { error });
             return {
@@ -176,17 +149,10 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ sheetId, rowId, include }) => {
           try {
-            console.info(`Getting row ${rowId} in sheet ${sheetId}`);
+            console.error(`Getting row ${rowId} in sheet ${sheetId}`);
             const row = await api.sheets.getRow(sheetId, rowId, include);
-            
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(row, null, 2)
-                }
-              ]
-            };
+
+            return limitResponseSize(row);
           } catch (error: any) {
             console.error(`Failed to get row ${rowId} in sheet ${sheetId}`, { error });
             return {
@@ -224,7 +190,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ sheetId, rows }) => {
           try {
-            console.info(`Updating ${rows.length} rows in sheet ${sheetId}`);
+            console.error(`Updating ${rows.length} rows in sheet ${sheetId}`);
             const result = await api.sheets.updateRows(sheetId, rows);
             
             return {
@@ -273,7 +239,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ sheetId, rows }) => {
           try {
-            console.info(`Adding ${rows.length} rows to sheet ${sheetId}`);
+            console.error(`Adding ${rows.length} rows to sheet ${sheetId}`);
             const result = await api.sheets.addRows(sheetId, rows);
             
             return {
@@ -311,7 +277,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
           },
           async ({ sheetId, rowIds, ignoreRowsNotFound }) => {
             try {
-              console.info(`Deleting ${rowIds.length} rows from sheet ${sheetId}`);
+              console.error(`Deleting ${rowIds.length} rows from sheet ${sheetId}`);
               const result = await api.sheets.deleteRows(sheetId, rowIds, ignoreRowsNotFound);
               
               return {
@@ -337,7 +303,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
           }
         );
       } else {
-        console.warn("Delete operations are disabled. Set ALLOW_DELETE_TOOLS=true to enable them.");
+        console.error("Delete operations are disabled. Set ALLOW_DELETE_TOOLS=true to enable them.");
       }
       
       // Tool: Get Sheet Location
@@ -349,7 +315,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ sheetId }) => {
           try {
-            console.info(`Getting location for sheet ${sheetId}`);
+            console.error(`Getting location for sheet ${sheetId}`);
             const location = await api.sheets.getSheetLocation(sheetId);
             
             return {
@@ -386,7 +352,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ sheetId, destinationName, destinationFolderId }) => {
           try {
-            console.info(`Copying sheet ${sheetId} to "${destinationName}"`);
+            console.error(`Copying sheet ${sheetId} to "${destinationName}"`);
             
             // If no destination folder is specified, get the current folder
             if (!destinationFolderId) {
@@ -394,7 +360,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
                 const location = await api.sheets.getSheetLocation(sheetId);
                 destinationFolderId = location.folderId;
               } catch (error) {
-                console.warn("Failed to get sheet location, using default folder", { error });
+                console.error("Failed to get sheet location, using default folder", { error });
               }
             }
             
@@ -440,7 +406,7 @@ export function getSheetTools(server: McpServer, api: SmartsheetAPI, allowDelete
         },
         async ({ name, columns, folderId }) => {
           try {
-            console.info(`Creating new sheet "${name}"`);
+            console.error(`Creating new sheet "${name}"`);
             const result = await api.sheets.createSheet(name, columns, folderId);
             
             return {

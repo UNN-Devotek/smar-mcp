@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SmartsheetAPI } from "../apis/smartsheet-api.js";
 import { z } from "zod";
+import { limitResponseSize } from "../utils/response-limiter.js";
 
 export function getUserTools(server: McpServer, api: SmartsheetAPI) {
 
@@ -10,17 +11,10 @@ export function getUserTools(server: McpServer, api: SmartsheetAPI) {
         "Gets the current user's information",
         async () => {
         try {
-            console.info("Getting current user");
+            console.error("Getting current user");
             const user = await api.users.getCurrentUser();
             
-            return {
-            content: [
-                {
-                type: "text",
-                text: JSON.stringify(user, null, 2)
-                }
-            ]
-            };
+            return limitResponseSize(user);
         } catch (error: any) {
             console.error("Failed to get current user", { error });
             return {
@@ -45,17 +39,10 @@ export function getUserTools(server: McpServer, api: SmartsheetAPI) {
         },
         async ({ userId }) => {
         try {
-            console.info(`Getting user with ID: ${userId}`);
+            console.error(`Getting user with ID: ${userId}`);
             const user = await api.users.getUserById(userId);
             
-            return {
-            content: [
-                {
-                type: "text",
-                text: JSON.stringify(user, null, 2)
-                }
-            ]
-            };
+            return limitResponseSize(user);
         } catch (error: any) {
             console.error("Failed to get user", { error });
             return {
@@ -76,17 +63,10 @@ export function getUserTools(server: McpServer, api: SmartsheetAPI) {
         "Lists all users",
         async () => {
             try {
-                console.info("Listing all users");
+                console.error("Listing all users");
                 const users = await api.users.listUsers();
                 
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify(users, null, 2)
-                        }
-                    ]
-                };
+                return limitResponseSize(users);
             } catch (error: any) {
                 console.error("Failed to list users", { error });
                 return {

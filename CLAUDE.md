@@ -119,6 +119,77 @@ gh pr create --title "PR Title" --body "PR description"
   │   └── config.yml         # Issue template configuration
   └── PULL_REQUEST_TEMPLATE/
       └── default.md         # Default PR template
+src/
+  ├── apis/
+  │   ├── smartsheet-api.ts              # Base API class — all domain APIs hang off this
+  │   ├── smartsheet-sheet-api.ts        # Sheets (CRUD, rows, columns)
+  │   ├── smartsheet-summary-api.ts      # Sheet Summary fields (GET/POST/PUT/DELETE)
+  │   ├── smartsheet-discussion-api.ts   # Discussions & comments
+  │   ├── smartsheet-folder-api.ts       # Folders
+  │   ├── smartsheet-search-api.ts       # Search
+  │   ├── smartsheet-user-api.ts         # Users
+  │   └── smartsheet-workspace-api.ts    # Workspaces
+  ├── tools/
+  │   ├── smartsheet-sheet-tools.ts
+  │   ├── smartsheet-summary-tools.ts    # get/add/update/delete sheet summary fields
+  │   ├── smartsheet-discussion-tools.ts
+  │   ├── smartsheet-folder-tools.ts
+  │   ├── smartsheet-search-tools.ts
+  │   ├── smartsheet-update-request-tools.ts
+  │   ├── smartsheet-user-tools.ts
+  │   └── smartsheet-workspace-tools.ts
+  ├── smartsheet-types/                  # TypeScript interfaces
+  └── utils/
+      └── response-limiter.ts            # Truncates large API responses for MCP
+```
+
+## Development Commands
+
+```bash
+# Build TypeScript
+npm run build
+
+# Run in dev mode (ts-node / watch)
+npm run dev
+
+# Run tests
+npm test
+```
+
+## Adding New Tools — Pattern
+
+Every tool follows the same three-layer pattern:
+
+1. **API class** (`src/apis/smartsheet-*.ts`) — thin wrapper around `fetch`, calls `this.api.makeRequest()`
+2. **Tools file** (`src/tools/smartsheet-*-tools.ts`) — registers `server.tool()` with Zod schemas
+3. **Registration** (`src/index.ts`) — imports the tools function and calls it with `(server, api, allowDeleteTools)`
+
+Delete-capable tools must be gated behind the `allowDeleteTools` flag.
+
+## Sheet Summary Fields
+
+- **Column range syntax** `[Column Name]:[Column Name]` references the **entire column** — covers all current and future rows automatically.
+- **Column type matters** — `MIN`/`MAX` on dates only work if the column type is `DATE`, not `TEXT_NUMBER`. Convert via `PUT /sheets/{id}/columns/{colId}` with `{ "type": "DATE" }`.
+- **Transient #REF bug** — if a formula is stored as `=SUM(#REF:#REF)`, the column reference failed to resolve at creation time. Fix by re-PUTting the same formula to force re-resolution.
+- **Percent fields** — formula should return a decimal (0–1), not 0–100. Pair with `numberFormat=3` format string.
+- **COUNTIF vs COUNTIFS** — use `COUNTIFS` (plural) when the criterion is a function like `ISDATE(@cell)`.
+
+### Format String Reference
+
+Format strings are 17-element comma-separated values (indices 0–16):
+
+| Index | Field | Common values |
+|-------|-------|---------------|
+| 11 | currency | `13` = USD ($) |
+| 12 | decimalCount | `0`–`5` |
+| 13 | thousandsSeparator | `1` = yes |
+| 14 | numberFormat | `1` = NUMBER, `2` = CURRENCY, `3` = PERCENT |
+
+**Quick reference:**
+```
+Currency $ no decimal : ,,,,,,,,,,,13,0,1,2,,
+Integer with commas   : ,,,,,,,,,,,,0,1,1,,
+Percent (0–1 value)   : ,,,,,,,,,,,,0,,3,,
 ```
 
 ## Conventional Commits
@@ -133,10 +204,8 @@ This repository follows the conventional commits standard:
 - `test`: Adding/modifying tests
 - `chore`: Changes to build process or auxiliary tools
 
-## Development Commands
-
-Add common development commands here that should be run regularly.
-
 ## Code Conventions
 
-Add code conventions specific to this repository here.
+- Use `limitResponseSize()` on all GET tool responses to prevent MCP context overflow.
+- Gate destructive tools (delete, bulk-modify) behind the `allowDeleteTools` boolean passed into every tools registration function.
+- Always pass `sheetId` as `string` in Zod schemas — Smartsheet IDs exceed JavaScript's safe integer range.

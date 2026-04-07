@@ -5,6 +5,8 @@ import { SmartsheetSearchAPI } from './smartsheet-search-api.js';
 import { SmartsheetSheetAPI } from './smartsheet-sheet-api.js';
 import { SmartsheetWorkspaceAPI } from './smartsheet-workspace-api.js';
 import { SmartsheetUserAPI } from './smartsheet-user-api.js';
+import { SmartsheetSummaryAPI } from './smartsheet-summary-api.js';
+import { SmartsheetDashboardAPI } from './smartsheet-dashboard-api.js';
 import packageJson from '../../package.json' with { type: 'json' };
 
 /**
@@ -19,6 +21,8 @@ export class SmartsheetAPI {
   public users: SmartsheetUserAPI;
   public search: SmartsheetSearchAPI;
   public discussions: SmartsheetDiscussionAPI;
+  public summary: SmartsheetSummaryAPI;
+  public dashboards: SmartsheetDashboardAPI;
   /** 
    * Creates a new SmartsheetAPI instance
    * @param accessToken Smartsheet API access token
@@ -33,6 +37,8 @@ export class SmartsheetAPI {
     this.users = new SmartsheetUserAPI(this);
     this.search = new SmartsheetSearchAPI(this);
     this.discussions = new SmartsheetDiscussionAPI(this);
+    this.summary = new SmartsheetSummaryAPI(this);
+    this.dashboards = new SmartsheetDashboardAPI(this);
     
     if (this.accessToken == '') {
       throw new Error('SMARTSHEET_API_KEY environment variable is not set');
@@ -73,7 +79,7 @@ export class SmartsheetAPI {
           });
         }
         
-        console.info(`API Request: ${method} ${url.toString()}`);
+        console.error(`API Request: ${method} ${url.toString()}`);
         
         const response = await axios({
           method,
